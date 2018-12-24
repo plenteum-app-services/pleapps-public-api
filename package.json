@@ -1,0 +1,21 @@
+{
+  "name": "turtlepay-public-api",
+  "version": "0.0.1",
+  "description": "TurtlePay Public API Interface",
+  "main": "index.js",
+  "scripts": {
+    "test": "standard"
+  },
+  "keywords": [
+    "TurtlePay"
+  ],
+  "author": "TurtlePay Developers\u001b[HThe",
+  "license": "AGPL-3.0",
+  "dependencies": {
+    "amqplib": "^0.5.3",
+    "body-parser": "^1.18.3",
+    "compression": "^1.7.3",
+    "express": "^4.16.4",
+    "helmet": "^3.15.0"
+  }
+}

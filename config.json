@@ -9,5 +9,9 @@
   },
   "bindIp": "0.0.0.0",
   "httpPort": 80,
-  "corsHeader": "*"
+  "corsHeader": "*",
+  "coinDecimals": 2,
+  "coinUri": "turtlecoin",
+  "defaultConfirmations": 60,
+  "maximumConfirmations": 120
 }

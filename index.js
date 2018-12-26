@@ -6,11 +6,58 @@
 
 const Config = require('./config.json')
 const DatabaseBackend = require('./lib/databaseBackend.js')
+const TurtleCoinUtils = require('turtlecoin-utils')
+const cryptoUtils = new TurtleCoinUtils()
 const util = require('util')
 const Compression = require('compression')
 const Helmet = require('helmet')
 const BodyParser = require('body-parser')
 const Express = require('express')
+const walletQueue = 'request.wallet'
+const RabbitMQ = require('amqplib')
+const UUID = require('uuid/v4')
+
+const publicRabbitHost = process.env.RABBIT_PUBLIC_SERVER || 'localhost'
+const publicRabbitUsername = process.env.RABBIT_PUBLIC_USERNAME || ''
+const publicRabbitPassword = process.env.RABBIT_PUBLIC_PASSWORD || ''
+
+/* Helps us to build the RabbitMQ connection string */
+function buildConnectionString (host, username, password) {
+  var result = ['amqp://']
+
+  if (username.length !== 0 && password.length !== 0) {
+    result.push(username + ':')
+    result.push(password + '@')
+  }
+
+  result.push(host)
+
+  return result.join('')
+}
+
+/* This is a special magic function to make sure that when
+   we parse a number that the whole thing is actually a
+   number */
+function toNumber (term) {
+  if (typeof term === 'number' && term % 1 === 0) {
+    return term
+  }
+  if (parseInt(term).toString() === term) {
+    return parseInt(term)
+  } else {
+    return false
+  }
+}
+
+/* We neet to set up our RabbitMQ environment */
+var rabbit
+var channel
+var replyQueue
+(async function () {
+  rabbit = await RabbitMQ.connect(buildConnectionString(publicRabbitHost, publicRabbitUsername, publicRabbitPassword))
+  channel = await rabbit.createChannel()
+  replyQueue = await channel.assertQueue('', { exclusive: true, durable: false })
+}())
 
 /* Let's set up a standard logger. Sure it looks cheap but it's
    reliable and won't crash */
@@ -60,6 +107,120 @@ app.use(Helmet())
 
 /* Last but certainly not least, enable compression because we're going to need it */
 app.use(Compression())
+
+/* This is the meat and potatoes entry method for the public API
+   aka, submitting a new request for funds to the processing engine */
+app.post('/v1/new', async function (req, res) {
+  const atomicAmount = toNumber(req.body.amount)
+  const callback = req.body.callback || false
+  const address = req.body.address || false
+  const callerData = req.body.userDefined || {}
+  const confirmations = toNumber(req.body.confirmations)
+  const amount = (atomicAmount / Math.pow(10, Config.coinDecimals))
+  var cancelTimer
+
+  /* Validate that the caller has supplied a valid CryptoNote address
+     for us to send funds to */
+  try {
+    cryptoUtils.decodeAddress(address)
+  } catch (e) {
+    logHTTPError(req, 'Invalid address supplied')
+    return res.status(400).send()
+  }
+
+  /* Verify that the caller has supplied a valid amount to request */
+  if (!atomicAmount || atomicAmount === 0 || atomicAmount < 0) {
+    logHTTPError(req, 'Invalid amount requested')
+    return res.status(400).send()
+  }
+
+  /* If the caller has supplied the number of confirmations that they
+     are willing to wait and override our defaults, then we're going
+     to validate that it's okay. */
+  var requestConfirmations
+  if (confirmations !== false) {
+    /* If the caller requested 0 or less or more confirmations than we
+       allow, we're going to reject their request */
+    if (confirmations < 0 || confirmations > Config.maximumConfirmations) {
+      logHTTPError(req, 'Invalid confirmations requested')
+      return res.status(400).send()
+    }
+    requestConfirmations = confirmations
+  } else {
+    /* If the caller did not supply the number of confirmations required
+       then we'll use the default value */
+    requestConfirmations = Config.defaultConfirmations
+  }
+
+  try {
+    /* Generate a random request ID for use by the RPC client */
+    const requestId = UUID().toString().replace(/-/g, '')
+
+    /* Assemble the data we're passing to the backend workers */
+    const walletRequest = {
+      amount: atomicAmount,
+      address: address,
+      confirmations: requestConfirmations,
+      callback: callback,
+      callerData: callerData
+    }
+
+    /* Here, we set up our worker side of the queue to grab the replyQueue
+       from the backend workers so we can spit the results back to the client */
+    channel.consume(replyQueue.queue, (message) => {
+      /* If we received a valid message and it matches our request let's tell the caller */
+      if (message !== null && message.properties.correlationId === requestId) {
+        var workerResponse = JSON.parse(message.content.toString())
+        var sendToAddress = workerResponse.address
+
+        /* Acknowledge to RabbitMQ that we've received the request and we're handling it */
+        channel.ack(message)
+
+        /* We received a response so we don't need this timer anymore */
+        if (cancelTimer !== null) {
+          clearTimeout(cancelTimer)
+        }
+
+        /* Log the request and spit the response back to the caller */
+        logHTTPRequest(req, JSON.stringify(walletRequest))
+        return res.json({
+          sendToAddress: sendToAddress,
+          atomicAmount: atomicAmount,
+          amount: amount,
+          userDefined: callerData,
+          startHeight: workerResponse.scanHeight,
+          endHeight: workerResponse.maxHeight,
+          confirmations: requestConfirmations,
+          qrCode: 'https://chart.googleapis.com/chart?cht=qr&chs=256x256&chl=' + Config.coinUri + '://' + sendToAddress + '?amount=' + atomicAmount
+
+        })
+      } else if (message !== null) {
+        /* There was a message, but it wasn't for us. Let it go back
+           in the queue for someone else to handle */
+        channel.nack(message)
+      }
+    })
+
+    /* Send the request to create a wallet to the queue for processing
+       by the backend workers and give it a time limit of 2s */
+    channel.sendToQueue(walletQueue, Buffer.from(JSON.stringify(walletRequest)), {
+      correlationId: requestId,
+      replyTo: replyQueue.queue,
+      expiration: 2000
+    })
+
+    /* Define a timer that if we don't get a response back in 2.5s or less
+       that we need to consider the request failed and let the caller know
+       that something went wrong */
+    cancelTimer = setTimeout(() => {
+      logHTTPError(req, 'RPC request timed out')
+      return res.status(500).send()
+    }, 5000)
+  } catch (e) {
+    logHTTPError(req, e.toString())
+    return res.status(500).send()
+  }
+})
 
 /* This is our catch all to return a 404-error */
 app.all('*', (req, res) => {

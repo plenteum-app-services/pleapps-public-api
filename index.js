@@ -92,6 +92,7 @@ const app = Express()
 /* Automatically decode JSON input from client requests */
 app.use(BodyParser.json())
 
+/* Catch body-parser errors */
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError) {
     return res.status(400).send()

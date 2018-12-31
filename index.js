@@ -92,6 +92,13 @@ const app = Express()
 /* Automatically decode JSON input from client requests */
 app.use(BodyParser.json())
 
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError) {
+    return res.status(400).send()
+  }
+  next()
+})
+
 /* Set up a few of our headers to make this API more functional */
 app.use((req, res, next) => {
   res.header('X-Requested-With', '*')
@@ -116,6 +123,12 @@ app.post('/v1/new', async function (req, res) {
   const address = req.body.address || false
   const callerData = req.body.userDefined || {}
   const confirmations = toNumber(req.body.confirmations)
+
+  if (!atomicAmount) {
+    logHTTPError(req, 'Invalid amount supplied')
+    return res.status(400).send()
+  }
+
   const amount = (atomicAmount / Math.pow(10, Config.coinDecimals))
   var cancelTimer
 
@@ -126,6 +139,15 @@ app.post('/v1/new', async function (req, res) {
   } catch (e) {
     logHTTPError(req, 'Invalid address supplied')
     return res.status(400).send()
+  }
+
+  /* Verify that the caller supplied us with an acceptable callback
+     URL that we'll post back to later */
+  if (callback) {
+    if (callback.substring(0, 4).toLowerCase() !== 'http') {
+      logHTTPError(req, 'Invalid callback URL supplied')
+      return res.status(400).send()
+    }
   }
 
   /* Verify that the caller has supplied a valid amount to request */

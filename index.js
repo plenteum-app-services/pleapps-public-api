@@ -214,6 +214,7 @@ app.post('/v1/new', async function (req, res) {
           startHeight: workerResponse.scanHeight,
           endHeight: workerResponse.maxHeight,
           confirmations: requestConfirmations,
+          callbackPublicKey: workerResponse.publicKey,
           qrCode: 'https://chart.googleapis.com/chart?cht=qr&chs=256x256&chl=' + Config.coinUri + '://' + sendToAddress + '?amount=' + atomicAmount
 
         })

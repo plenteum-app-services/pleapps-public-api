@@ -122,6 +122,7 @@ app.post('/v1/new', async function (req, res) {
   const atomicAmount = toNumber(req.body.amount)
   const callback = req.body.callback || false
   const address = req.body.address || false
+  const name = req.body.name || false
   const callerData = req.body.userDefined || {}
   const confirmations = toNumber(req.body.confirmations)
 
@@ -215,7 +216,7 @@ app.post('/v1/new', async function (req, res) {
           endHeight: workerResponse.maxHeight,
           confirmations: requestConfirmations,
           callbackPublicKey: workerResponse.publicKey,
-          qrCode: 'https://chart.googleapis.com/chart?cht=qr&chs=256x256&chl=' + Config.coinUri + '://' + sendToAddress + '?amount=' + atomicAmount
+          qrCode: 'https://chart.googleapis.com/chart?cht=qr&chs=256x256&chl=' + Config.coinUri + '://' + sendToAddress + '?amount=' + atomicAmount + ((name) ? '&name=' + encodeURIComponent(name) : '')
 
         })
       } else if (message !== null) {

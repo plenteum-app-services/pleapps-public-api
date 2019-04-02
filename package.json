@@ -13,6 +13,7 @@
   "author": "TurtlePay Developers\u001b[HThe",
   "license": "AGPL-3.0",
   "dependencies": {
+    "aes-js": "^3.1.2",
     "amqplib": "^0.5.3",
     "body-parser": "^1.18.3",
     "compression": "^1.7.3",

@@ -6,7 +6,7 @@
 
 const Config = require('./config.json')
 const DatabaseBackend = require('./lib/databaseBackend.js')
-const TurtleCoinUtils = require('turtlecoin-utils')
+const TurtleCoinUtils = require('turtlecoin-utils').CryptoNote
 const cryptoUtils = new TurtleCoinUtils()
 const util = require('util')
 const Compression = require('compression')

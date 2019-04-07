@@ -327,34 +327,6 @@ app.post('/v1/button', (req, res) => {
   }
 })
 
-app.get('/v1/button/:buttonPayload', (req, res) => {
-  const encryptedButtonPayload = req.params.buttonPayload || false
-
-  if (!encryptedButtonPayload) {
-    logHTTPError(req, 'No button payload provided')
-    return res.status(400).send()
-  }
-
-  try {
-    /* Try to decrypt the data from the button payload */
-    const validationResult = crypto.decrypt(encryptedButtonPayload)
-
-    /* Try to process the request using the backend workers */
-    processNewRequest(validationResult).then((result) => {
-      if (result.error) {
-        logHTTPError(req, result.error.message)
-        return res.status(result.error.retCode).send()
-      }
-
-      logHTTPRequest(req, result.logMessage)
-      return res.json(result.response)
-    })
-  } catch (e) {
-    logHTTPError(req, 'Invalid button payload provided')
-    return res.status(400).send()
-  }
-})
-
 app.post('/v1/button/new', (req, res) => {
   /* Validate that our request has no errors in the data that the
      caller supplied, or let them know we won't be proceeding */

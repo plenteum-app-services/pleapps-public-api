@@ -301,6 +301,7 @@ app.post('/v1/new', (req, res) => {
 
 app.post('/v1/button', (req, res) => {
   const encryptedButtonPayload = req.body.buttonPayload || false
+  const callerData = req.body.userDefined || {}
 
   if (!encryptedButtonPayload) {
     logHTTPError(req, 'No button payload provided')
@@ -310,6 +311,9 @@ app.post('/v1/button', (req, res) => {
   try {
     /* Try to decrypt the data from the button payload */
     const validationResult = crypto.decrypt(encryptedButtonPayload)
+
+    /* Add to the request if additional userDefined data provided */
+    Object.assign(validationResult.userDefined, callerData)
 
     /* Try to process the request using the backend workers */
     processNewRequest(validationResult).then((result) => {

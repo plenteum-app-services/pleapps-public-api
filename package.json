@@ -1,6 +1,6 @@
 {
   "name": "turtlepay-public-api",
-  "version": "0.0.1",
+  "version": "0.0.5",
   "description": "TurtlePay Public API Interface",
   "main": "index.js",
   "scripts": {
@@ -20,10 +20,10 @@
     "express": "^4.17.1",
     "helmet": "^3.18.0",
     "mysql": "^2.17.1",
-    "turtlecoin-utils": "0.0.6",
+    "turtlecoin-utils": "^1.0.2",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
-    "standard": "^12.0.1"
+    "standard": "^13.0.1"
   }
 }

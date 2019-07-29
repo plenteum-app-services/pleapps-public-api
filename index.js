@@ -4,6 +4,7 @@
 
 'use strict'
 
+require('dotenv').config()
 const AES = require('./lib/aes.js')
 const BodyParser = require('body-parser')
 const Compression = require('compression')

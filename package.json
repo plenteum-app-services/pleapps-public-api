@@ -1,7 +1,7 @@
 {
-  "name": "turtlepay-public-api",
+  "name": "pleapps-public-api",
   "version": "0.0.5",
-  "description": "TurtlePay Public API Interface",
+  "description": "Plenteum App Services Public API Interface",
   "main": "index.js",
   "scripts": {
     "test": "standard",
@@ -21,7 +21,7 @@
     "express": "^4.17.1",
     "helmet": "^3.20.0",
     "mysql": "^2.17.1",
-    "turtlecoin-utils": "^1.0.3",
+    "plenteum-utils": "^1.0.6",
     "uuid": "^3.3.3"
   },
   "devDependencies": {

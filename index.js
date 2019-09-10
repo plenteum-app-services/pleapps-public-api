@@ -13,11 +13,11 @@ const DatabaseBackend = require('./lib/databaseBackend.js')
 const Express = require('express')
 const Helmet = require('helmet')
 const RabbitMQ = require('amqplib')
-const TurtleCoinUtils = require('turtlecoin-utils').CryptoNote
+const PlenteumUtils = require('plenteum-utils').CryptoNote
 const util = require('util')
 const UUID = require('uuid/v4')
 
-const cryptoUtils = new TurtleCoinUtils()
+const cryptoUtils = new PlenteumUtils()
 const walletQueue = 'request.wallet'
 
 const publicRabbitHost = process.env.RABBIT_PUBLIC_SERVER || 'localhost'

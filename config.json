@@ -4,14 +4,14 @@
     "port": 3306,
     "username": "root",
     "password": "password",
-    "database": "turtlecoin",
+    "database": "plenteum",
     "connectionLimit": 10
   },
   "bindIp": "0.0.0.0",
   "httpPort": 80,
   "corsHeader": "*",
-  "coinDecimals": 2,
-  "coinUri": "turtlecoin",
-  "defaultConfirmations": 60,
-  "maximumConfirmations": 120
+  "coinDecimals": 8,
+  "coinUri": "plenteum",
+  "defaultConfirmations": 20,
+  "maximumConfirmations": 30
 }

@@ -14,17 +14,17 @@
   "license": "AGPL-3.0",
   "dependencies": {
     "aes-js": "^3.1.2",
-    "amqplib": "^0.5.3",
+    "amqplib": "^0.5.5",
     "body-parser": "^1.19.0",
     "compression": "^1.7.4",
-    "dotenv": "^8.0.0",
+    "dotenv": "^8.1.0",
     "express": "^4.17.1",
-    "helmet": "^3.18.0",
+    "helmet": "^3.20.0",
     "mysql": "^2.17.1",
-    "turtlecoin-utils": "^1.0.2",
-    "uuid": "^3.3.2"
+    "turtlecoin-utils": "^1.0.3",
+    "uuid": "^3.3.3"
   },
   "devDependencies": {
-    "standard": "^13.0.1"
+    "standard": "^13.1.0"
   }
 }
